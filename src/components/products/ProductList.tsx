@@ -4,8 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Pencil, Trash2, Search } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Modal } from "@/components/ui/Modal";
-import { ProductForm } from "@/components/products/ProductForm";
 import { deleteProduct } from "@/lib/products";
 import { formatCurrency, formatDate, cn } from "@/lib/utils";
 import type { Product, ProductCategory } from "@/types";
@@ -29,7 +27,6 @@ export function ProductList({
   onRefresh,
   showAddForm = true,
 }: ProductListProps) {
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const router = useRouter();
@@ -217,7 +214,7 @@ export function ProductList({
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              setEditingProduct(product);
+                              router.push(`/dashboard/products/edit/${product.id}`);
                             }}
                           >
                             <Pencil className="h-3.5 w-3.5" />
@@ -292,24 +289,6 @@ export function ProductList({
           )}
         </div>
       )}
-
-      <Modal
-        isOpen={!!editingProduct}
-        onClose={() => setEditingProduct(null)}
-        title="Edit Product"
-        size="lg"
-      >
-        {editingProduct && (
-          <ProductForm
-            product={editingProduct}
-            onSuccess={() => {
-              setEditingProduct(null);
-              onRefresh();
-            }}
-            onCancel={() => setEditingProduct(null)}
-          />
-        )}
-      </Modal>
     </div>
   );
 }

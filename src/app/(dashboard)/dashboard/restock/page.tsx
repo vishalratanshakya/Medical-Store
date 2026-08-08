@@ -74,8 +74,8 @@ export default function RestockListPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 shadow-sm">
-            <table className="w-full border-collapse">
+          <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 shadow-sm">
+            <table className="w-full min-w-[640px] border-collapse">
               <thead>
                 <tr className="border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/50">
                   <th className="px-6 py-4 text-left text-xs font-semibold uppercase text-gray-600 dark:text-gray-400">
