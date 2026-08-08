@@ -52,7 +52,7 @@ export default function LoginPage() {
     <div className="relative flex min-h-screen w-full flex-col overflow-hidden bg-gray-950 md:flex-row">
       
       {/* LEFT SIDE: Interactive Hanging Lamp & Ambient Room */}
-      <div className="relative flex flex-1 flex-col items-center justify-center p-8 transition-colors duration-500 bg-radial-[at_top] from-gray-900 to-gray-950">
+      <div className="relative flex h-[340px] min-h-[300px] flex-col items-center justify-start pt-6 transition-colors duration-500 bg-radial-[at_top] from-gray-900 to-gray-950 md:flex-1 md:h-auto md:justify-center md:p-8">
         {/* Glow / Light Cone Effect */}
         <AnimatePresence>
           {lightOn && (
@@ -79,9 +79,16 @@ export default function LoginPage() {
           )}
         </AnimatePresence>
 
-        {/* Lamp SVG Graphics Container */}
-        <div className="relative z-10 flex flex-col items-center w-full max-w-[200px]">
-          <svg width="200" height="260" viewBox="0 0 200 260" fill="none" className="overflow-visible">
+        {/* Lamp SVG Graphics Container — scales down on mobile */}
+        <div className="relative z-10 flex flex-col items-center w-full max-w-[160px] md:max-w-[200px]">
+          {/* Mobile: 140x180, Desktop: 200x260 */}
+          <svg
+            width="160"
+            height="190"
+            viewBox="0 0 200 260"
+            fill="none"
+            className="overflow-visible w-[140px] h-[160px] md:w-[200px] md:h-[260px]"
+          >
             {/* Ceiling Cord */}
             <line x1="100" y1="0" x2="100" y2="150" stroke="#374151" strokeWidth="3" />
             
@@ -109,7 +116,7 @@ export default function LoginPage() {
             <path d="M96 195 C98 190, 102 190, 104 195" stroke={lightOn ? "#eab308" : "#374151"} strokeWidth="2" fill="none" />
           </svg>
 
-          {/* Interactive Pull String (Cord) */}
+          {/* Interactive Pull String (Cord) — shorter on mobile */}
           <motion.div
             drag="y"
             dragConstraints={{ top: 0, bottom: 0 }}
@@ -121,29 +128,30 @@ export default function LoginPage() {
                 setTimeout(() => setLampClick(false), 150);
               }
             }}
-            className="absolute left-[100px] top-[195px] flex flex-col items-center cursor-ns-resize origin-top select-none"
+            className="absolute flex flex-col items-center cursor-ns-resize origin-top select-none"
+            style={{ left: "50%", top: "calc(75% - 4px)", transform: "translateX(-50%)" }}
           >
-            {/* Cable thread */}
-            <div className="w-[2px] h-[90px] bg-gray-500" />
+            {/* Cable thread — 55px on mobile, 90px on md+ */}
+            <div className="w-[2px] bg-gray-500 h-[55px] md:h-[90px]" />
             
             {/* Clickable Knob */}
             <motion.div
               animate={{ scale: lampClick ? 0.8 : 1 }}
-              className="w-4 h-4 rounded-full bg-yellow-500 shadow-md border-2 border-gray-900 flex items-center justify-center"
+              className="w-5 h-5 rounded-full bg-yellow-500 shadow-lg border-2 border-gray-900 flex items-center justify-center"
             >
-              <div className="w-1.5 h-1.5 rounded-full bg-white/70" />
+              <div className="w-2 h-2 rounded-full bg-white/70" />
             </motion.div>
           </motion.div>
         </div>
 
         {/* Instructive Hint */}
-        <div className="absolute bottom-10 flex flex-col items-center text-center">
-          <p className="text-sm font-semibold tracking-wider text-gray-500 dark:text-gray-400 uppercase mb-1">
+        <div className="absolute bottom-4 md:bottom-10 flex flex-col items-center text-center">
+          <p className="text-xs md:text-sm font-semibold tracking-wider text-gray-500 dark:text-gray-400 uppercase mb-1">
             {lightOn ? "Light is ON" : "Room is Dark"}
           </p>
-          <p className="text-xs text-gray-600 dark:text-gray-500 flex items-center gap-1">
-            <HelpCircle className="h-3.5 w-3.5" />
-            Pull the hanging cord down to toggle light
+          <p className="text-[10px] md:text-xs text-gray-600 dark:text-gray-500 flex items-center gap-1">
+            <HelpCircle className="h-3 w-3 md:h-3.5 md:w-3.5" />
+            Pull the cord down to toggle light
           </p>
         </div>
       </div>
@@ -204,7 +212,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    placeholder="admin@medicalstore.com"
+                    placeholder="Enter your email"
                     className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-10 pr-4 text-sm text-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   />
                 </div>
@@ -250,7 +258,7 @@ export default function LoginPage() {
                 Authorized Admin Login. Public registration is disabled.
               </p>
               <p className="text-[10px] text-blue-400/80 font-medium">
-                Demo: admin@medicalstore.com | admin123
+                Demo: admin@medicalstore.com | admin@123#
               </p>
             </div>
           </div>
