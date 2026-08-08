@@ -164,7 +164,7 @@ export default function EditProductPage({ params }: PageProps) {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6">
+    <div className="w-full px-4 py-6">
       {/* Toast Notification */}
       {success && (
         <div className="fixed right-6 top-6 z-50 flex items-center gap-3 rounded-2xl bg-emerald-500 px-6 py-4 text-white shadow-xl animate-in slide-in-from-top duration-300">
