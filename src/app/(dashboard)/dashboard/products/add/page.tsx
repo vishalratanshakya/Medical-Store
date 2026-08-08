@@ -61,22 +61,25 @@ export default function AddProductPage() {
         
         const formData = new FormData();
         formData.append("file", file);
+        formData.append("upload_preset", "medical-store");
+        formData.append("cloud_name", "daowawj5g");
+        formData.append("folder", "medical-store");
         
         setUploadProgress(60);
         
-        const response = await fetch("/api/upload", {
+        const response = await fetch("https://api.cloudinary.com/v1_1/daowawj5g/image/upload", {
           method: "POST",
           body: formData,
         });
         
         if (!response.ok) {
           const resData = await response.json();
-          throw new Error(resData.error || "Image upload failed");
+          throw new Error(resData.error?.message || "Image upload failed");
         }
         
         const data = await response.json();
         setUploadProgress(100);
-        setImageUploadedUrl(data.url);
+        setImageUploadedUrl(data.secure_url);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to upload image to Cloudinary");
         setImagePreview(null);

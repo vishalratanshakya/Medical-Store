@@ -1,10 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Search, Plus, Minus, Trash2, Download, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { createSale } from "@/lib/sales";
-import { formatCurrency, generateInvoiceNumber } from "@/lib/utils";
+import { formatCurrency, generateInvoiceNumber, cn } from "@/lib/utils";
 import type { CartItem, Product } from "@/types";
 import { CATEGORY_LABELS } from "@/types";
 import jsPDF from "jspdf";
@@ -15,10 +15,13 @@ interface BillingPOSProps {
   onSaleComplete: () => void;
 }
 
+const ITEMS_PER_PAGE = 15;
+
 export function BillingPOS({ products, onSaleComplete }: BillingPOSProps) {
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const [lastInvoice, setLastInvoice] = useState<{
     number: string;
     items: CartItem[];
@@ -26,11 +29,31 @@ export function BillingPOS({ products, onSaleComplete }: BillingPOSProps) {
     date: string;
   } | null>(null);
   const invoiceRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const availableProducts = products.filter((p) => p.stockQuantity > 0);
   const filteredProducts = availableProducts.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  // Reset pagination when searching
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
+
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+  const displayedProducts = filteredProducts.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  const startRange = filteredProducts.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1;
+  const endRange = Math.min(currentPage * ITEMS_PER_PAGE, filteredProducts.length);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    listRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   const addToCart = (product: Product) => {
     setCart((prev) => {
@@ -126,7 +149,7 @@ export function BillingPOS({ products, onSaleComplete }: BillingPOSProps) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
-      <div className="lg:col-span-2 space-y-4">
+      <div ref={listRef} className="lg:col-span-2 space-y-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
@@ -138,30 +161,88 @@ export function BillingPOS({ products, onSaleComplete }: BillingPOSProps) {
           />
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          {filteredProducts.map((product) => (
-            <button
-              key={product.id}
-              onClick={() => addToCart(product)}
-              className="rounded-xl border border-gray-200 bg-white p-4 text-left transition-all hover:border-blue-300 hover:shadow-md dark:border-gray-700 dark:bg-gray-900 dark:hover:border-blue-600"
-            >
-              <p className="font-medium text-gray-900 dark:text-white">
-                {product.name}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {CATEGORY_LABELS[product.category]}
-              </p>
-              <div className="mt-2 flex items-center justify-between">
-                <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
-                  {formatCurrency(product.sellingRate)}
-                </span>
-                <span className="text-xs text-gray-500">
-                  Stock: {product.stockQuantity}
-                </span>
+        {displayedProducts.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-gray-200 bg-white p-8 text-center dark:border-gray-800 dark:bg-gray-900">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              No available products found.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              {displayedProducts.map((product) => (
+                <button
+                  key={product.id}
+                  onClick={() => addToCart(product)}
+                  className="rounded-xl border border-gray-200 bg-white p-4 text-left transition-all hover:border-blue-300 hover:shadow-md dark:border-gray-700 dark:bg-gray-900 dark:hover:border-blue-600"
+                >
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    {product.name}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {CATEGORY_LABELS[product.category]}
+                  </p>
+                  <div className="mt-2 flex items-center justify-between">
+                    <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+                      {formatCurrency(product.sellingRate)}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      Stock: {product.stockQuantity}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages >= 1 && (
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900 transition-colors">
+                <div className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                  Showing <span className="font-semibold text-gray-800 dark:text-gray-200">{startRange}</span> to{" "}
+                  <span className="font-semibold text-gray-800 dark:text-gray-200">{endRange}</span> of{" "}
+                  <span className="font-semibold text-gray-800 dark:text-gray-200">{filteredProducts.length}</span> products
+                </div>
+
+                <div className="flex items-center gap-1.5 self-center sm:self-auto">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    disabled={currentPage === 1}
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    className="px-2.5 py-1 text-xs"
+                  >
+                    Previous
+                  </Button>
+
+                  {Array.from({ length: totalPages }, (_, idx) => {
+                    const pNum = idx + 1;
+                    return (
+                      <Button
+                        key={pNum}
+                        size="sm"
+                        variant={currentPage === pNum ? "primary" : "secondary"}
+                        onClick={() => handlePageChange(pNum)}
+                        className={cn("w-7 h-7 p-0 flex items-center justify-center rounded-lg text-xs", currentPage === pNum && "shadow-md shadow-blue-500/20")}
+                      >
+                        {pNum}
+                      </Button>
+                    );
+                  })}
+
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    disabled={currentPage === totalPages}
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    className="px-2.5 py-1 text-xs"
+                  >
+                    Next
+                  </Button>
+                </div>
               </div>
-            </button>
-          ))}
-        </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="space-y-4">

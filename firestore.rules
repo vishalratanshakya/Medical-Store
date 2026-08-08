@@ -1,0 +1,17 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // DEVELOPMENT MODE RULES: Allows anyone to read and write.
+    // Use this to test the app without setting up Firebase Authentication.
+    match /{document=**} {
+      allow read, write: if true;
+    }
+    
+    // SECURE PRODUCTION MODE RULES (Uncomment and replace above block when ready):
+    // match /{document=**} {
+    //   allow read, write: if request.auth != null;
+    // }
+    
+  }
+}

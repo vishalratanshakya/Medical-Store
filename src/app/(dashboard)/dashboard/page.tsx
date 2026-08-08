@@ -23,31 +23,23 @@ import { restockProduct } from "@/lib/products";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { products, loading: productsLoading, refresh } = useProducts();
+  const { products, loading: productsLoading } = useProducts();
   const { sales, loading: salesLoading } = useSales();
-
-  const [restockItem, setRestockItem] = useState<Product | null>(null);
-  const [restockQty, setRestockQty] = useState<number>(0);
-  const [toastMsg, setToastMsg] = useState("");
-
-  const handleConfirmRestock = async () => {
-    if (!restockItem || restockQty <= 0) return;
-    try {
-      await restockProduct(restockItem.id, restockQty);
-      setToastMsg(`Successfully restocked ${restockQty} units of ${restockItem.name}!`);
-      setTimeout(() => setToastMsg(""), 3000);
-      setRestockItem(null);
-      setRestockQty(0);
-      await refresh();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to restock");
-    }
-  };
+  const [currentPage, setCurrentPage] = useState(1);
 
   const loading = productsLoading || salesLoading;
   const lowStockProducts = products.filter(
     (p) => p.stockQuantity < LOW_STOCK_THRESHOLD
   );
+
+  const ITEMS_PER_PAGE = 5;
+  const totalPages = Math.ceil(lowStockProducts.length / ITEMS_PER_PAGE);
+  const displayedLowStock = lowStockProducts.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+  const startRange = lowStockProducts.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1;
+  const endRange = Math.min(currentPage * ITEMS_PER_PAGE, lowStockProducts.length);
   const totalStockValue = products.reduce(
     (sum, p) => sum + p.sellingRate * p.stockQuantity,
     0
@@ -179,107 +171,97 @@ export default function DashboardPage() {
             All products are fully stocked!
           </p>
         ) : (
-          <div className="divide-y divide-gray-100 dark:divide-gray-800 border-t border-gray-100 dark:border-gray-800">
-            {lowStockProducts.map((p) => (
-              <div
-                key={p.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between py-3.5 gap-3 transition-colors hover:bg-gray-50/50 dark:hover:bg-slate-800/50 px-2"
-              >
-                {/* Left: Name & Category subtext */}
-                <div className="flex-1">
-                  <p className="font-semibold text-sm text-gray-900 dark:text-white">
-                    {p.name}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                    {CATEGORY_LABELS[p.category]}
-                  </p>
+          <div className="space-y-4">
+            <div className="divide-y divide-gray-100 dark:divide-gray-800 border-t border-gray-100 dark:border-gray-800">
+              {displayedLowStock.map((p) => (
+                <div
+                  key={p.id}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between py-3.5 gap-3 transition-colors hover:bg-gray-50/50 dark:hover:bg-slate-800/50 px-2"
+                >
+                  {/* Left: Name & Category subtext */}
+                  <div className="flex-1">
+                    <p className="font-semibold text-sm text-gray-900 dark:text-white">
+                      {p.name}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                      {CATEGORY_LABELS[p.category]}
+                    </p>
+                  </div>
+
+                  {/* Center: Stock count badge & warning */}
+                  <div className="flex items-center gap-3 sm:flex-1 sm:justify-center">
+                    <span className="rounded-full bg-amber-100 dark:bg-amber-950/40 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-300">
+                      Stock: {p.stockQuantity} units
+                    </span>
+                    <span className="rounded-full bg-red-100 dark:bg-red-950/40 px-2.5 py-0.5 text-xs font-semibold text-red-700 dark:text-red-300">
+                      Low Stock
+                    </span>
+                  </div>
+
+                  {/* Right: Restock Action Button */}
+                  <div className="flex sm:justify-end">
+                    <Button
+                      size="sm"
+                      onClick={() => router.push(`/dashboard/restock/${p.id}`)}
+                      className="px-4"
+                    >
+                      Restock
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages >= 1 && (
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-t border-gray-100 dark:border-gray-800 pt-4 transition-colors">
+                <div className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                  Showing <span className="font-semibold text-gray-800 dark:text-gray-200">{startRange}</span> to{" "}
+                  <span className="font-semibold text-gray-800 dark:text-gray-200">{endRange}</span> of{" "}
+                  <span className="font-semibold text-gray-800 dark:text-gray-200">{lowStockProducts.length}</span> products
                 </div>
 
-                {/* Center: Stock count badge & warning */}
-                <div className="flex items-center gap-3 sm:flex-1 sm:justify-center">
-                  <span className="rounded-full bg-amber-100 dark:bg-amber-950/40 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-300">
-                    Stock: {p.stockQuantity} units
-                  </span>
-                  <span className="rounded-full bg-red-100 dark:bg-red-950/40 px-2.5 py-0.5 text-xs font-semibold text-red-700 dark:text-red-300">
-                    Low Stock
-                  </span>
-                </div>
-
-                {/* Right: Restock Action Button */}
-                <div className="flex sm:justify-end">
+                <div className="flex items-center gap-1.5 self-center sm:self-auto">
                   <Button
                     size="sm"
-                    onClick={() => setRestockItem(p)}
-                    className="px-4"
+                    variant="secondary"
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage(currentPage - 1)}
+                    className="px-2.5 py-1 text-xs"
                   >
-                    Restock
+                    Previous
+                  </Button>
+
+                  {Array.from({ length: totalPages }, (_, idx) => {
+                    const pNum = idx + 1;
+                    return (
+                      <Button
+                        key={pNum}
+                        size="sm"
+                        variant={currentPage === pNum ? "primary" : "secondary"}
+                        onClick={() => setCurrentPage(pNum)}
+                        className={cn("w-7 h-7 p-0 flex items-center justify-center rounded-lg text-xs", currentPage === pNum && "shadow-md shadow-blue-500/20")}
+                      >
+                        {pNum}
+                      </Button>
+                    );
+                  })}
+
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage(currentPage + 1)}
+                    className="px-2.5 py-1 text-xs"
+                  >
+                    Next
                   </Button>
                 </div>
               </div>
-            ))}
+            )}
           </div>
         )}
       </div>
-
-      {/* Toast Notification */}
-      {toastMsg && (
-        <div className="fixed right-6 top-6 z-50 flex items-center gap-3 rounded-2xl bg-emerald-500 px-6 py-4 text-white shadow-xl animate-in slide-in-from-top duration-300">
-          <span className="font-medium">{toastMsg}</span>
-        </div>
-      )}
-
-      {/* Small Inline Restock Modal */}
-      {restockItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-xl dark:border-gray-800 dark:bg-gray-900 space-y-4 animate-in zoom-in-95 duration-200">
-            <div className="border-b border-gray-100 dark:border-gray-800 pb-2">
-              <h3 className="text-base font-bold text-gray-900 dark:text-white">
-                Restock: {restockItem.name}
-              </h3>
-            </div>
-            
-            <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
-              <div className="flex justify-between">
-                <span>Current Stock:</span>
-                <span className="font-semibold text-gray-950 dark:text-white">{restockItem.stockQuantity} units</span>
-              </div>
-              
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Quantity to Add
-                </label>
-                <input
-                  type="number"
-                  required
-                  min="1"
-                  value={restockQty || ""}
-                  onChange={(e) => setRestockQty(parseInt(e.target.value, 10) || 0)}
-                  className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                  placeholder="e.g. 50"
-                  autoFocus
-                />
-              </div>
-
-              <div className="flex justify-between border-t border-gray-100 dark:border-gray-800 pt-2 text-gray-900 dark:text-white font-medium">
-                <span>New Stock Preview:</span>
-                <span>{restockItem.stockQuantity + restockQty} units</span>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-2">
-              <Button variant="secondary" onClick={() => { setRestockItem(null); setRestockQty(0); }}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleConfirmRestock}
-                disabled={restockQty <= 0}
-              >
-                Restock
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

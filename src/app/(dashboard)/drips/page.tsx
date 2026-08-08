@@ -17,7 +17,7 @@ export default function DripsPage() {
   }
 
   return (
-    <div>
+    <div className="w-full space-y-6">
       <PageHeader
         title="Drips"
         description="Manage IV drips and related medical supplies"

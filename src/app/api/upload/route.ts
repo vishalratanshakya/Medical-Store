@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
+import fs from "fs";
+import path from "path";
 
 // Configure Cloudinary from server-side environment variables
 cloudinary.config({
@@ -37,6 +39,12 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error("Cloudinary upload API error:", error);
+    const errMsg = error instanceof Error ? `${error.message}\n${error.stack}` : String(error);
+    try {
+      fs.writeFileSync(path.join(process.cwd(), "upload_error.log"), errMsg);
+    } catch (e) {
+      console.error("Failed to write error log:", e);
+    }
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to upload image" },
       { status: 500 }

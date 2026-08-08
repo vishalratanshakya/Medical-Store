@@ -60,7 +60,7 @@ export default function RestockProductPage({ params }: PageProps) {
       setSaving(true);
 
       // 1. Update the inventory stock level in Firebase
-      await restockProduct(selectedProduct.id, quantity);
+      await restockProduct(selectedProduct.id, quantity, batchNumber, expiryDate);
 
       // 2. Log investment cost as expense
       await createExpense({
