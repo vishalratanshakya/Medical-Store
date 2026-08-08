@@ -25,6 +25,7 @@ function mapProduct(id: string, data: Record<string, unknown>): Product {
     stockQuantity: Number(data.stockQuantity ?? 0),
     expiryDate: String(data.expiryDate ?? ""),
     batchNumber: String(data.batchNumber ?? ""),
+    imageUrl: data.imageUrl ? String(data.imageUrl) : undefined,
     createdAt: String(data.createdAt ?? new Date().toISOString()),
     updatedAt: String(data.updatedAt ?? new Date().toISOString()),
   };

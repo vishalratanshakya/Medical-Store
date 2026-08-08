@@ -14,6 +14,7 @@ export interface Product {
   stockQuantity: number;
   expiryDate: string;
   batchNumber: string;
+  imageUrl?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -26,6 +27,7 @@ export interface ProductFormData {
   stockQuantity: number;
   expiryDate: string;
   batchNumber: string;
+  imageUrl?: string;
 }
 
 export interface SaleItem {
